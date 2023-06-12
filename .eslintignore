@@ -1,0 +1,14 @@
+node_modules
+app/**/node_modules
+coverage
+lib
+dist
+.kovixstudio
+
+*.html
+*.css
+*.scss
+
+
+*.js
+*.xml
