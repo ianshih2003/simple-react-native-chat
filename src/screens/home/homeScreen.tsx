@@ -1,100 +1,114 @@
-import { PropsWithChildren } from 'react';
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View, useColorScheme } from 'react-native';
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions
-} from 'react-native/Libraries/NewAppScreen';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Card, Paragraph } from 'react-native-paper';
+import { useAppTheme, useUserContext } from '../../../App';
+import api from '../../api/api';
+import { HomeScreenNavigation } from '../../navigation/auth-navigation';
+
+export type User = {
+  id: number,
+  firstName: string,
+  lastName: string,
+  email: string,
+  uid: string
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop:         32,
-    paddingHorizontal: 24
+  tinyLogo: {
+    width:  50,
+    height: 50
   },
-  sectionTitle: {
-    fontSize:   24,
-    fontWeight: '600'
+  logo: {
+    width:  66,
+    height: 58,
+    flex:   1
   },
-  sectionDescription: {
-    marginTop:  8,
-    fontSize:   18,
-    fontWeight: '400'
-  },
-  highlight: {
-    fontWeight: '700'
+  cardPadding: {
+    marginVertical:   8,
+    marginHorizontal: 16
   }
 });
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({ children, title }: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black
-          }
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark
-          }
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+interface ItemCardProps<T> {
+  item: T;
+  onPress: () => void;
 }
 
-export default function HomeScreen() {
+const ItemCard = ({
+                    item,
+                    onPress
+                  }: ItemCardProps<User>) => {
+  const appTheme = useAppTheme();
 
-  const isDarkMode = useColorScheme() === 'dark';
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <Card
+        className='my-2 mx-5'
+        style={[
+          styles.cardPadding,
+          {
+            backgroundColor: appTheme.colors.surfaceVariant
+          }
+        ]}>
+        <Card.Content className='flex-row justify-center items-center h-36'>
+          <Image
+            style={styles.logo}
+            source={{
+              uri: 'https://static.vecteezy.com/system/resources/previews/009/665/172/original/man-doing-sit-up-exercise-for-abdominal-muscles-vector-young-boy-wearing-a-blue-shirt-flat-character-athletic-man-doing-sit-ups-for-the-belly-and-abdominal-exercises-men-doing-crunches-in-the-gym-free-png.png'
+            }}
+            resizeMode='cover'
+          />
+          <View className='items-center' style={{ flex: 2 }}>
+            <Paragraph
+              style={{ color: appTheme.colors.onBackground }}
+              className='text-2xl'>
+              {item.email}
+            </Paragraph>
+            <Paragraph style={{ color: appTheme.colors.onSurfaceVariant }}>
+              {item.firstName} {item.lastName}
+            </Paragraph>
+          </View>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
+  );
+};
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter
+export type Page<T> = {
+  count: number,
+  rows: T[],
+};
+
+export default function HomeScreen({ navigation: { navigate } }: { navigation: HomeScreenNavigation }) {
+  const [users, setUsers] = useState<User[]>([]);
+
+  const { currentUser } = useUserContext();
+
+  useEffect(() => {
+    // Function to fetch the list of users
+    const fetchUsers = async () => {
+      try {
+        const { data } = await api.get<Page<User>>('/users');
+
+        console.log('Users:', data);
+
+        setUsers(data.rows.filter(user => user.id !== currentUser.id));
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const navigateToUser = (user: User) => {
+    console.log('Navigate to user:', user);
+    navigate('ChatScreen', { user });
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior='automatic'
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white
-          }}>
-          <Section title='Step One'>
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title='See Your Changes'>
-            <ReloadInstructions />
-          </Section>
-          <Section title='Debug'>
-            <DebugInstructions />
-          </Section>
-          <Section title='Learn More'>
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View>
+      <FlatList data={users} renderItem={({ item: user }) => (
+        <ItemCard item={user} onPress={() => navigateToUser(user)} />)} />
+    </View>
   );
 }

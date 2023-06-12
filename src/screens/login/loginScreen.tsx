@@ -1,8 +1,10 @@
 import { Controller, useForm } from 'react-hook-form';
 import { Button, Text, TextInput, View } from 'react-native';
+import { useUserContext } from '../../../App';
 import api from '../../api/api';
 import { LoginScreenNavigation } from '../../navigation/auth-navigation';
 import { saveToken } from '../../utils';
+import { getUser } from '../../utils/get-user';
 
 export default function LoginScreen({ navigation: { navigate } }: { navigation: LoginScreenNavigation }) {
   const { control, handleSubmit, formState: { errors } } = useForm({
@@ -12,6 +14,8 @@ export default function LoginScreen({ navigation: { navigate } }: { navigation: 
     }
   });
 
+  const { setCurrentUser } = useUserContext();
+
   const onSubmit = async ({ email, password }: {
     email: string,
     password: string
@@ -20,6 +24,8 @@ export default function LoginScreen({ navigation: { navigate } }: { navigation: 
       const { data } = await api.post('/auth/login', { email, password });
 
       await saveToken(data.token);
+
+      await getUser(setCurrentUser);
 
       navigate('HomeScreen');
     } catch (e) {

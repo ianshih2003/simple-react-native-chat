@@ -29,8 +29,6 @@
       "always",
       { "exceptAfterOverload": true }
     ],
-    "no-empty-function": "off",
-    "@typescript-eslint/no-empty-function": ["error"],
     "no-invalid-this": "off",
     "no-redeclare": "off",
     "@typescript-eslint/no-redeclare": ["error"],

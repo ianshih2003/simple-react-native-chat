@@ -1,8 +1,10 @@
 import { Controller, useForm } from 'react-hook-form';
 import { Button, Text, TextInput, View } from 'react-native';
+import { useUserContext } from '../../../App';
 import api from '../../api/api';
 import { RegisterScreenNavigation } from '../../navigation/auth-navigation';
 import { saveToken } from '../../utils';
+import { getUser } from '../../utils/get-user';
 
 export default function RegisterScreen({ navigation: { navigate } }: { navigation: RegisterScreenNavigation }) {
   const { control, handleSubmit, formState: { errors } } = useForm({
@@ -15,6 +17,8 @@ export default function RegisterScreen({ navigation: { navigate } }: { navigatio
       role:       'Athlete'
     }
   });
+
+  const { setCurrentUser } = useUserContext();
 
   const onSubmit = async ({ firstName, lastName, bodyWeight, email, password, role }: {
     firstName: string,
@@ -30,6 +34,8 @@ export default function RegisterScreen({ navigation: { navigate } }: { navigatio
       const { data } = await api.post('/auth/register', { firstName, lastName, bodyWeight, email, password, role });
 
       await saveToken(data.token);
+
+      await getUser(setCurrentUser);
 
       navigate('HomeScreen');
     } catch (e) {
